@@ -1,0 +1,17 @@
+[
+    {
+        "lookup_key": "email",
+        "lookup_value": "email-of-interest@sample.com",
+        "send_to": [
+            "http://mautic-instance.com/mailer/sendgrid_api/callback",
+            "http://keen.io/path/to/endpoint"
+        ]
+    },
+    {
+        "lookup_key": "app",
+        "lookup_value": "foobar",
+        "send_to": [
+            "https://another-host/path/to/endpoint"
+        ]
+    }
+]
