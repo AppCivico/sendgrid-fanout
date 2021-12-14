@@ -7,12 +7,45 @@ You can filter by some key/value on each event, and send to one or more remote s
 This is written using Mojolicious, after an event is received, the raw request is saved into the disk, outgoing requests
 are started asynchronous and the 200 response is sent back to SendGrid ASAP.
 
-If the outgoing requests fail (network or non-success HTTP responses), it will be queued for retry later and by the health-check
-endpoint.
+If the outgoing requests fail (network or non-success HTTP responses), it will be written to disk for later processing
+by the health-check endpoint. *If the process crash during the initial in-flight request, the error is not written to the disk yet, so for now individual events can be lost.*
 
-**If the process crash during the initial in-flight request, the error is not written to the disk yet, so events can be lost.**
+# Why
+
+SendGrid only support one Webhook per Account. SubAccounts are limited to `pro` plan.
+
+**Each one of your services should process bounces/spam-reports and alert their users by some other way other than e-mail**
+**(banner on web/app on logged users, SMS, WhatsApp, etc).**
+
+To select which application will receive, you can any ([but just one, see limitations](#Limitations)) SendGrid event field as a condition.
+
+If you integrate with SendGrid SMTP, you can include `X-SMTPAPI` encoded with pure-ASCII JSON, using `unique_args` or `custom_args` to identify your application. [(Read SendGrid docs here)](https://docs.sendgrid.com/for-developers/sending-email/building-an-x-smtpapi-header).
+
 
 # Usage
+
+
+# Endpoints
+
+`GET /health-check` - should be called each minute by monitoring tool.
+
+- Returns `200 OK` with `ok` if everything is fine.
+- Returns `200 OK` with `Failed requested: XX` if upstream is having a bad time.
+- Returns `400 Bad Request` with `server busy` if this endpoint cannot be locked for processing after 60 seconds.
+
+`GET /ping` - Test if application is alive
+
+- Returns `200 OK` with `pong`
+
+`POST /` - Eats the SendGrid JSON
+
+- Returns `200 OK` with `ok`
+- Returns `400 OK` with `not defined or not object` if json cannot be parsed or if the first level is not an array.
+
+
+
+
+# Configuration
 
 Copy `sample.config.json` to `config.json` and edit the fields:
 
@@ -88,8 +121,6 @@ This application will generate 3 POST requests, 2 requests for the first event (
 ## Limitations
 
 For performance reasons, it skip the event matching after the first match is found.
-Similarly, the only matching scheme now is "eq".
+Similarly, the only matching scheme now is "equal".
 
 You should do further filtering on your application.
-
-#

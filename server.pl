@@ -189,6 +189,10 @@ get '/health-check' => sub ($c) {
     return $c->render(text => 'ok');
 };
 
+get '/ping' => sub ($c) {
+    $c->render(text => 'pong');
+};
+
 any '/*' => sub ($c) {
     $c->render(text => '404',);
 };
