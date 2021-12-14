@@ -2,12 +2,10 @@
 
 With this repository you can send Event Webhook from SendGrid to multiple services.
 
-You can filter by some key/value on each event, and send to one or more remote services.
+This is written using Mojolicious, after an event is received, the raw request is saved on disk, outgoing requests
+are started asynchronous and *200 OK* response is sent back to SendGrid ASAP (+ 1200/s per worker is expected on modern hardware).
 
-This is written using Mojolicious, after an event is received, the raw request is saved into the disk, outgoing requests
-are started asynchronous and the 200 response is sent back to SendGrid ASAP.
-
-If the outgoing requests fail (network or non-success HTTP responses), it will be written to disk for later processing
+If the outgoing requests fail (either Network or non-success HTTP responses), it will be written to disk for later processing
 by the health-check endpoint. *If the process crash during the initial in-flight request, the error is not written to the disk yet, so for now individual events can be lost.*
 
 # Why
@@ -17,9 +15,9 @@ SendGrid only support one Webhook per Account. SubAccounts are limited to `pro` 
 **Each one of your services should process bounces/spam-reports and alert their users by some other way other than e-mail**
 **(banner on web/app on logged users, SMS, WhatsApp, etc).**
 
-To select which application will receive, you can any ([but just one, see limitations](#Limitations)) SendGrid event field as a condition.
+To select which services will receive the event, you can use **one** SendGrid event field as a condition. [See limitations.](#Limitations)
 
-If you integrate with SendGrid SMTP, you can include `X-SMTPAPI` encoded with pure-ASCII JSON, using `unique_args` or `custom_args` to identify your application. [(Read SendGrid docs here)](https://docs.sendgrid.com/for-developers/sending-email/building-an-x-smtpapi-header).
+If you integrate with SendGrid SMTP, you can include `X-SMTPAPI` encoded with pure-ASCII JSON, using `unique_args` or `custom_args` to identify your application. [Read SendGrid docs here](https://docs.sendgrid.com/for-developers/sending-email/building-an-x-smtpapi-header).
 
 
 # Usage

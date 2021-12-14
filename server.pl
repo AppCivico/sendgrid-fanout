@@ -193,8 +193,12 @@ get '/ping' => sub ($c) {
     $c->render(text => 'pong');
 };
 
+any '/' => sub ($c) {
+    $c->render(text => 'Method not allowed', status => 405);
+};
+
 any '/*' => sub ($c) {
-    $c->render(text => '404',);
+    $c->render(text => 'endpoint does not exists', status => 404);
 };
 
 app->start;
