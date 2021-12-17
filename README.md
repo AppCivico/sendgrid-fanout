@@ -17,11 +17,15 @@ SendGrid only support one Webhook per Account. SubAccounts are limited to `pro` 
 
 To select which services will receive the event, you can use **one** SendGrid event field as a condition. [See limitations.](#Limitations)
 
-If you integrate with SendGrid SMTP, you can include `X-SMTPAPI` encoded with pure-ASCII JSON, using `unique_args` or `custom_args` to identify your application. [Read SendGrid docs here](https://docs.sendgrid.com/for-developers/sending-email/building-an-x-smtpapi-header).
+If you integrate with SendGrid SMTP, you can include `X-SMTPAPI` encoded with pure-ASCII JSON, using `unique_args`. Sendgrid API v3 uses `custom_args` to identify your application. [Read SendGrid docs here](https://docs.sendgrid.com/for-developers/sending-email/building-an-x-smtpapi-header).
 
 
 # Usage
 
+
+# Testing
+
+run `$ prove -v test.pl`.
 
 # Endpoints
 
