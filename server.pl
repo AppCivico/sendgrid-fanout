@@ -20,7 +20,7 @@ my $trace_dir = $ENV{TRACE_DIR};
 die "env TRACE_DIR is not defined" if !$trace_dir;
 die "$trace_dir is not an directory" unless -d $trace_dir;
 
-my $config = app->home->rel_file('config.json')->slurp;
+my $config = $ENV{CONFIG_FILE} ? Mojo::File->new($ENV{CONFIG_FILE})->slurp : app->home->rel_file('config.json')->slurp;
 app->log->debug("config: $config");
 $config = eval { from_json($config) };
 if (!$config) {
@@ -33,15 +33,16 @@ app->helper(
         my ($c, $req_id, $url, $events) = @_;
         my $hash = $url;
         foreach my $event (@{$events}) {
-            $hash .= $event->{sg_event_id};
+            $hash .= exists $event->{sg_event_id} ? $event->{sg_event_id} : "$event";
         }
         $hash = md5_hex(encode_utf8($hash));
 
         my $file_name = Mojo::URL->new($url)->host;
 
         $file_name =~ s/[^A-Z-\.]+//gi;
-        $file_name =~ s/^\.+//;
         $file_name .= ".$hash.json";
+
+        $file_name =~ s/^\.+//;
 
         $c->log->debug("writing error to $error_dir/$file_name");
 
@@ -73,7 +74,7 @@ app->helper(
 );
 
 app->helper(
-    retry_execution => sub {
+    retry_execution_p => sub {
         my ($c, $file_name) = @_;
 
         $c->log->debug("retrying $file_name...");
@@ -81,23 +82,26 @@ app->helper(
         my $obj  = from_json($json);
 
         my $url = $obj->{url};
-        eval {
-            my $result = $c->ua->post($url, json => $obj->{events})->result;
-            $c->log->debug("-> $url: Response code " . $result->code);
 
-            if (!$result->is_success) {
-                $c->log->error("-> $url: requested failed again...");
-            }
-            else {
-                $c->log->debug("removing $file_name...");
-                unlink($file_name);
-            }
-        };
-        if ($@) {
-            $c->log->error("-> $url: failed to connect: $@");
-        }
+        my $promise = $c->ua->post_p($url, json => $obj->{events})->then(
+            sub ($tx) {
+                $c->log->debug("-> $url: Response code " . $tx->res->code);
+                if (!$tx->res->is_success) {
+                    $c->log->error("-> $url: requested failed again...");
+                }
+                else {
+                    $c->log->debug("removing $file_name...");
+                    $file_name->remove;
+                }
 
-        return 1;
+            }
+        )->catch(
+            sub ($err) {
+                $c->log->error("-> $url: failed to connect: $err");
+            }
+        );
+
+        return $promise;
     }
 );
 
@@ -118,6 +122,7 @@ post '/' => sub ($c) {
     foreach my $event (@{$events}) {
 
         foreach my $test (@{$config}) {
+            return $c->render(text => 'invalid object inside events array') if ref $test ne 'HASH';
             next unless exists $test->{send_to} && exists $test->{lookup_key} && exists $test->{lookup_value};
 
             if (exists $event->{$test->{lookup_key}} && $event->{$test->{lookup_key}} eq $test->{lookup_value}) {
@@ -172,11 +177,10 @@ get '/health-check' => sub ($c) {
 
     # escolhe 10 requests para executar em 30 segundos
     my $repair = $collection->shuffle->head(10)->to_array;
-
     foreach my $error_file (@{$repair}) {
         last if time() - $started > 30;
-
-        $c->retry_execution($error_file);
+        my $p = $c->retry_execution_p($error_file);
+        $p->wait;
     }
 
     # update status
