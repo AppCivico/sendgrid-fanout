@@ -6,6 +6,7 @@ use Mojo::URL;
 use Mojo::File qw/path/;
 use POSIX qw(strftime);
 use Lock::File qw(lockfile);
+use Mojo::AsyncAwait;
 
 sub is_array_ref {
     return ref(shift()) eq 'ARRAY' ? 1 : 0;
@@ -160,7 +161,7 @@ post '/' => sub ($c) {
     $c->render(text => 'ok');
 };
 
-get '/health-check' => sub ($c) {
+get '/health-check' => async sub ($c) {
 
     my $started    = time();
     my $collection = path($error_dir)->list();
@@ -179,8 +180,7 @@ get '/health-check' => sub ($c) {
     my $repair = $collection->shuffle->head(10)->to_array;
     foreach my $error_file (@{$repair}) {
         last if time() - $started > 30;
-        my $p = $c->retry_execution_p($error_file);
-        $p->wait;
+        await $c->retry_execution_p($error_file);
     }
 
     # update status

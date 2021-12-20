@@ -74,8 +74,6 @@ is_deeply(
 
 $backend->post_ok('/disable-err')->status_is(200);
 
-$t->get_ok('/health-check')->status_is(200);
-
 # this will queue the delete onto ioloop, need to make the request again to reflect the request
 $t->get_ok('/health-check')->status_is(200)->content_is('ok');
 
