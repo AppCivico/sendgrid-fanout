@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  webapp:
+    # Building our project image using the project Dockerfile
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+
+    # Running as "app" user
+    user: app
+
+    # Setting the working directory
+    working_dir: /src/
+
+    # Running the command which will render our application
+    command: "hypnotoad -f server.pl"
+
+    # Exposing the port
+    ports:
+      - 8080:8080
+      - 3000:3000
+
+    environment:
+      ERROR_DIR: /data/error-dir
+      TRACE_DIR: /data/trace-dir
+
+    # Mounting local volumes in development instance
+    volumes:
+      - ../sendgrid-fanout-data/:/data/
+
+    restart: "unless-stopped"
