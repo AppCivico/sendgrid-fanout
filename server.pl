@@ -12,14 +12,27 @@ sub is_array_ref {
     return ref(shift()) eq 'ARRAY' ? 1 : 0;
 }
 
+$ENV{MOJO_HYPNOTOAD_WORKERS} = 1 if !$ENV{MOJO_HYPNOTOAD_WORKERS} || $ENV{MOJO_HYPNOTOAD_WORKERS} < 0;
+app->config(hypnotoad => {listen => ['http://127.0.0.1:8080'], workers => $ENV{MOJO_HYPNOTOAD_WORKERS}});
+
 my $error_dir = $ENV{ERROR_DIR};
 die "env ERROR_DIR is not defined" if !$error_dir;
+if ($ENV{AUTO_START_DIR} && !-d $error_dir) {
+    mkdir($error_dir) or die "cannot create $error_dir $!";
+}
 die "$error_dir is not an directory" unless -d $error_dir;
 
 
+my $disble_trace = $ENV{DISABLE_TRACE_DIR};
 my $trace_dir = $ENV{TRACE_DIR};
-die "env TRACE_DIR is not defined" if !$trace_dir;
-die "$trace_dir is not an directory" unless -d $trace_dir;
+if (!$disble_trace){
+    die "env TRACE_DIR is not defined" if !$trace_dir;
+    if ($ENV{AUTO_START_DIR} && !-d $trace_dir) {
+        mkdir($trace_dir) or die "cannot create $trace_dir $!";
+    }
+    die "$trace_dir is not an directory" unless -d $trace_dir;
+}
+app->log->debug("reading config file...");
 
 my $config = $ENV{CONFIG_FILE} ? Mojo::File->new($ENV{CONFIG_FILE})->slurp : app->home->rel_file('config.json')->slurp;
 app->log->debug("config: $config");
@@ -64,6 +77,8 @@ app->helper(
 app->helper(
     record_event => sub {
         my ($c, $req_id, $json) = @_;
+
+        return 1 if $$disble_trace;
 
         my $file_name = strftime('%F', gmtime()) . '-' . time() . ".$req_id.json";
 

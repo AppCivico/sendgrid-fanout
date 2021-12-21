@@ -38,7 +38,6 @@ USER app
 # Set the working directory to mojolicious directory created above
 VOLUME ["/src", "/data"]
 
-ADD . /src
+ADD server.pl /src
 
-# Run a shell as the default command
-CMD ["/bin/sh"]
+CMD ["hypnotoad", "-f", "server.pl"]

@@ -2,6 +2,8 @@ version: "3.8"
 
 services:
   webapp:
+    container_name: sendgrid_fanout_www
+
     # Building our project image using the project Dockerfile
     build:
       context: .
@@ -18,15 +20,27 @@ services:
 
     # Exposing the port
     ports:
-      - 8080:8080
-      - 3000:3000
+      - ${BIND_ADDRESS}:8080
 
     environment:
-      ERROR_DIR: /data/error-dir
-      TRACE_DIR: /data/trace-dir
+      - DISABLE_TRACE_DIR=${DISABLE_TRACE_DIR}
+      - AUTO_START_DIR=${AUTO_START_DIR}
+      - ERROR_DIR=/data/error-dir
+      - TRACE_DIR=/data/trace-dir
+      - CONFIG_FILE=/src/config.json
+      - MOJO_INACTIVITY_TIMEOUT=60
+      - MOJO_KEEP_ALIVE_TIMEOUT=30
+      - MOJO_HYPNOTOAD_WORKERS=1
 
-    # Mounting local volumes in development instance
     volumes:
-      - ../sendgrid-fanout-data/:/data/
+      - ${ERROR_DIR}:/data/error-dir
+      - ${TRACE_DIR}:/data/trace-dir
+      - ${CONFIG_FILE}:/src/config.json
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
+
 
     restart: "unless-stopped"

@@ -22,6 +22,24 @@ If you integrate with SendGrid SMTP, you can include `X-SMTPAPI` encoded with pu
 
 # Usage
 
+    cp .env.sample .env
+    cp sample.config.json config.json
+    # edit .env to your needs
+    # edit config.json to your needs
+    docker-compose up --build
+
+
+    docker restart sendgrid_fanout_www
+
+    docker rm sendgrid_fanout_www
+
+## Envs
+
+DISABLE_TRACE_DIR - disable logging of raw requests
+TRACE_DIR - directory to log raw requests
+ERROR_DIR - directory to keep temporary errors requests to be retried
+AUTO_START_DIR - enable attempt to create directory on if not exists
+CONFIG_FILE - where to read config json file
 
 # Testing
 
