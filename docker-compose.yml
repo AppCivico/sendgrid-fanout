@@ -21,7 +21,8 @@ services:
     # Exposing the port
     ports:
       - ${BIND_ADDRESS}:8080
-
+    networks:
+      - public
     environment:
       - DISABLE_TRACE_DIR=${DISABLE_TRACE_DIR}
       - AUTO_START_DIR=${AUTO_START_DIR}
@@ -44,3 +45,7 @@ services:
 
 
     restart: "unless-stopped"
+
+networks:
+    public:
+      name: sendgrid-fanout-network
