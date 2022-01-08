@@ -13,7 +13,7 @@ sub is_array_ref {
 }
 
 $ENV{MOJO_HYPNOTOAD_WORKERS} = 1 if !$ENV{MOJO_HYPNOTOAD_WORKERS} || $ENV{MOJO_HYPNOTOAD_WORKERS} < 0;
-app->config(hypnotoad => {listen => ['http://127.0.0.1:8080'], workers => $ENV{MOJO_HYPNOTOAD_WORKERS}});
+app->config(hypnotoad => {listen => ['http://0.0.0.0:8080'], workers => $ENV{MOJO_HYPNOTOAD_WORKERS}});
 
 my $error_dir = $ENV{ERROR_DIR};
 die "env ERROR_DIR is not defined" if !$error_dir;
