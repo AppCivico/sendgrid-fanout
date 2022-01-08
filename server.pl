@@ -80,7 +80,7 @@ app->helper(
     record_event => sub {
         my ($c, $req_id, $json) = @_;
 
-        return 1 if $$disble_trace;
+        return 1 if $disble_trace;
 
         my $file_name = strftime('%F', gmtime()) . '-' . time() . ".$req_id.json";
 
